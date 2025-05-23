@@ -10,7 +10,7 @@ OUTPUT_DIR = os.path.join(os.path.expanduser("~"), "Downloads", "Instagram Repor
 os.makedirs(OUTPUT_DIR, exist_ok=True)
 
 # PDF generation
-def generate_pdf_report(chart_file, top_posts, engagement_by_type, output_path):
+def generate_pdf_report(chart_file, top_posts, engagement_by_type, engagement_by_day, engagement_by_hour, hashtag_engagement, output_path):
     pdf = FPDF()
     pdf.add_page()
 
@@ -24,6 +24,28 @@ def generate_pdf_report(chart_file, top_posts, engagement_by_type, output_path):
     pdf.set_font("Arial", "", 11)
     for post_type, rate in engagement_by_type.items():
         pdf.cell(0, 8, f"{post_type}: {rate:.4f}", ln=True)
+
+    pdf.ln(5)
+    pdf.set_font("Arial", "B", 12)
+    pdf.cell(0, 10, "Engagement Rate by Day of Week:", ln=True)
+    pdf.set_font("Arial", "", 11)
+    for day, rate in engagement_by_day.items():
+        pdf.cell(0, 8, f"{day}: {rate:.4f}", ln=True)
+
+    pdf.ln(5)
+    pdf.set_font("Arial", "B", 12)
+    pdf.cell(0, 10, "Engagement Rate by Hour of Day:", ln=True)
+    pdf.set_font("Arial", "", 11)
+    for hour, rate in engagement_by_hour.items():
+        pdf.cell(0, 8, f"{hour:02d}:00 - {rate:.4f}", ln=True)
+
+    if not hashtag_engagement.empty:
+        pdf.ln(5)
+        pdf.set_font("Arial", "B", 12)
+        pdf.cell(0, 10, "Top Hashtags by Average Engagement Rate:", ln=True)
+        pdf.set_font("Arial", "", 11)
+        for tag, rate in hashtag_engagement.items():
+            pdf.cell(0, 8, f"{tag}: {rate:.4f}", ln=True)
 
     pdf.ln(5)
     pdf.set_font("Arial", "B", 12)
@@ -88,7 +110,7 @@ def analyze_data(file):
     plt.savefig(chart_file)
     plt.close()
 
-    generate_pdf_report(chart_file, top_posts, engagement_by_type, pdf_file)
+    generate_pdf_report(chart_file, top_posts, engagement_by_type, engagement_by_day, engagement_by_hour, hashtag_engagement, pdf_file)
 
     return df, engagement_by_type, engagement_by_day, engagement_by_hour, top_posts, hashtag_engagement, chart_file, pdf_file
 
@@ -127,6 +149,7 @@ if file is not None:
 
         except Exception as e:
             st.error(f"Something went wrong: {e}")
+
 
 
 
