@@ -58,6 +58,20 @@ def analyze_data(file):
     engagement_by_hour = df.groupby('Hour')['Engagement Rate'].mean().sort_index()
     top_posts = df.sort_values('Engagement Rate', ascending=False).head(5)
 
+    # Hashtag analysis
+    hashtag_engagement = pd.DataFrame()
+    if 'Hashtags' in df.columns:
+        hashtag_rows = df[['Hashtags', 'Engagement Rate']].dropna()
+        all_tags = []
+        for _, row in hashtag_rows.iterrows():
+            tags = str(row['Hashtags']).split()
+            for tag in tags:
+                all_tags.append((tag.strip(), row['Engagement Rate']))
+
+        if all_tags:
+            tag_df = pd.DataFrame(all_tags, columns=['Hashtag', 'Engagement Rate'])
+            hashtag_engagement = tag_df.groupby('Hashtag')['Engagement Rate'].mean().sort_values(ascending=False).head(10)
+
     chart_file = os.path.join(OUTPUT_DIR, "engagement_trend_chart.png")
     pdf_file = os.path.join(OUTPUT_DIR, "instagram_report.pdf")
 
@@ -76,7 +90,7 @@ def analyze_data(file):
 
     generate_pdf_report(chart_file, top_posts, engagement_by_type, pdf_file)
 
-    return df, engagement_by_type, engagement_by_day, engagement_by_hour, top_posts, chart_file, pdf_file
+    return df, engagement_by_type, engagement_by_day, engagement_by_hour, top_posts, hashtag_engagement, chart_file, pdf_file
 
 # Streamlit App
 st.set_page_config(page_title="Instagram Tracker", layout="centered")
@@ -87,7 +101,7 @@ file = st.file_uploader("Upload Instagram CSV File", type="csv")
 if file is not None:
     with st.spinner("Analyzing data..."):
         try:
-            df, engagement_by_type, engagement_by_day, engagement_by_hour, top_posts, chart_file, pdf_file = analyze_data(file)
+            df, engagement_by_type, engagement_by_day, engagement_by_hour, top_posts, hashtag_engagement, chart_file, pdf_file = analyze_data(file)
 
             st.success("✅ Analysis complete!")
             st.image(chart_file, caption="Engagement Trend")
@@ -103,6 +117,10 @@ if file is not None:
 
             st.subheader("🔥 Top 5 Posts by Engagement Rate")
             st.dataframe(top_posts[['Publish time', 'Post type', 'Reach', 'Likes', 'Comments', 'Shares', 'Saves', 'Engagement Rate']])
+
+            if not hashtag_engagement.empty:
+                st.subheader("🏷️ Top Hashtags by Average Engagement Rate")
+                st.bar_chart(hashtag_engagement)
 
             with open(pdf_file, "rb") as f:
                 st.download_button("📄 Download PDF Report", f, file_name="instagram_report.pdf")
