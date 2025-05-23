@@ -116,7 +116,7 @@ def analyze_data(file):
 
 # Streamlit App
 st.set_page_config(page_title="Instagram Tracker", layout="centered")
-st.image("logo.png", width=150)
+st.image("assets/logo.png", width=150)
 st.title("📊 Instagram Engagement Analyzer")
 
 file = st.file_uploader("Upload Instagram CSV File", type="csv")
@@ -150,6 +150,7 @@ if file is not None:
 
         except Exception as e:
             st.error(f"Something went wrong: {e}")
+
 
 
 
