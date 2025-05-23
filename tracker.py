@@ -50,7 +50,12 @@ def analyze_data(file):
     df = df.sort_values('Publish time')
     df['Rolling Engagement Rate'] = df['Engagement Rate'].rolling(window=5).mean()
 
+    df['Day of Week'] = df['Publish time'].dt.day_name()
+    df['Hour'] = df['Publish time'].dt.hour
+
     engagement_by_type = df.groupby('Post type')['Engagement Rate'].mean()
+    engagement_by_day = df.groupby('Day of Week')['Engagement Rate'].mean().sort_values(ascending=False)
+    engagement_by_hour = df.groupby('Hour')['Engagement Rate'].mean().sort_index()
     top_posts = df.sort_values('Engagement Rate', ascending=False).head(5)
 
     chart_file = os.path.join(OUTPUT_DIR, "engagement_trend_chart.png")
@@ -70,7 +75,8 @@ def analyze_data(file):
     plt.close()
 
     generate_pdf_report(chart_file, top_posts, engagement_by_type, pdf_file)
-    return engagement_by_type, top_posts, chart_file, pdf_file
+
+    return df, engagement_by_type, engagement_by_day, engagement_by_hour, top_posts, chart_file, pdf_file
 
 # Streamlit App
 st.set_page_config(page_title="Instagram Tracker", layout="centered")
@@ -81,15 +87,21 @@ file = st.file_uploader("Upload Instagram CSV File", type="csv")
 if file is not None:
     with st.spinner("Analyzing data..."):
         try:
-            engagement_by_type, top_posts, chart_file, pdf_file = analyze_data(file)
+            df, engagement_by_type, engagement_by_day, engagement_by_hour, top_posts, chart_file, pdf_file = analyze_data(file)
 
             st.success("✅ Analysis complete!")
             st.image(chart_file, caption="Engagement Trend")
 
-            st.subheader("Average Engagement Rate by Post Type")
+            st.subheader("📌 Average Engagement Rate by Post Type")
             st.dataframe(engagement_by_type.reset_index().rename(columns={0: 'Engagement Rate'}))
 
-            st.subheader("Top 5 Posts by Engagement Rate")
+            st.subheader("📆 Engagement Rate by Day of the Week")
+            st.bar_chart(engagement_by_day)
+
+            st.subheader("⏰ Engagement Rate by Hour of Day")
+            st.line_chart(engagement_by_hour)
+
+            st.subheader("🔥 Top 5 Posts by Engagement Rate")
             st.dataframe(top_posts[['Publish time', 'Post type', 'Reach', 'Likes', 'Comments', 'Shares', 'Saves', 'Engagement Rate']])
 
             with open(pdf_file, "rb") as f:
@@ -97,6 +109,7 @@ if file is not None:
 
         except Exception as e:
             st.error(f"Something went wrong: {e}")
+
 
 
 
