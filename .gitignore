@@ -1,0 +1,17 @@
+# Ignore virtual environments
+venv/
+__pycache__/
+*.pyc
+
+# Ignore build and packaging files
+build/
+dist/
+*.egg-info/
+
+# Ignore system/macOS files
+.DS_Store
+
+# Ignore data and local files
+*.csv
+*.pdf
+*.png
